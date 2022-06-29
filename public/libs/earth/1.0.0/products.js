@@ -334,35 +334,6 @@ var products = function() {
                 });
             }
         },
-
-        "Q": {
-            matches: _.matches({param: "wind", overlayType: "Q"}),
-            create: function(attr) {
-                return buildProduct({
-                    field: "scalar",
-                    type: "Q",
-                    description: localize({
-                        name: {en: "Q"},
-                        qualifier: {en: " @ " + describeSurface(attr)}
-                    }),
-                    builder: function(vars) {
-                        let data = vars['data']
-                        let header = vars['header'].header
-                        return {
-                            header: header,
-                            interpolate: bilinearInterpolateScalar,
-                            data: function(i) {
-                                return data[i];
-                            }
-                        }
-                    },
-                    units: [
-                        {label: "kg/kg",  conversion: function(x) { return x; },                precision: 1}
-                    ],
-                    
-                });
-            }
-        },
     };
 
     /**
@@ -542,10 +513,14 @@ var products = function() {
     }
     //TODO uogolnic dla wszystkich
     function productsFor(attributes) {
-        var attr = _.clone(attributes), results = [];
+        let attr = _.clone(attributes);
+        let results = [];
         _.values(FACTORIES).forEach(function(factory) {
             if (factory.matches(attr)) {
                 results.push(factory.create(attr));
+            }
+            else{
+                results.push()
             }
         });
         return results.filter(µ.isValue);
