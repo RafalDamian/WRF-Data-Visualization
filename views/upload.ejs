@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Add File</title>
+    <meta itemprop="name"                                      content="earth"/>
+    <meta itemprop="description"     name="description"        content="WRF Data Visualization"/>
+    <meta itemprop="author"          name="author"             content="Rafal Damian"/>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/styles/styles.css"/>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+</head>
+<body data-lang="en">
+
+    <%- include('navbar') -%>
+
+    <form action="/upload" method='POST' enctype='multipart/form-data'>
+        <h2>Upload File</h2> <br />     
+        <input type="file" name="file" id="file" multiple/>
+        <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+    
+</body>
+</html>

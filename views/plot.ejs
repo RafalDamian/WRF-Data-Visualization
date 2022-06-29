@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html itemscope itemtype="http://schema.org/Map" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
+    <meta charset="utf-8"/>
+    <title>CoCO2 WRF Visualization</title>
+    <meta itemprop="name"                                      content="earth"/>
+    <meta itemprop="description"     name="description"        content="an animated map of global wind and weather"/>
+    <meta itemprop="author"          name="author"             content="Rafal Damian"/>
+
+    <meta property="og:type"        content="website"/>
+    <meta property="og:title"       content="earth"/>
+    <meta property="og:description" content="An animated map of global wind and weather. Visit the community at https://www.facebook.com/EarthWindMap"/>
+    <meta property="og:url"         content="http://earth.nullschool.net"/>
+    <meta property="og:image"       content="http://earth.nullschool.net/preview.jpg"/>
+
+    <link rel="shortcut icon" href="img/favicon.ico"/>
+    <link rel="apple-touch-icon" sizes="120x120" href="img/iphone-icon.png"/>
+    <link rel="apple-touch-icon" sizes="152x152" href="img/ipad-icon.png"/>
+    <link rel="stylesheet" type="text/css" href="/styles/styles.css"/>
+
+    <link rel="alternate" hreflang="x-default" href="http://earth.nullschool.net/"/>
+    <link rel="alternate" hreflang="ja" href="http://earth.nullschool.net/jp/"/>
+
+    
+</head>
+<body data-lang="en">
+
+    <div id="display">
+        <svg id="map" class="fill-screen" xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>
+        <canvas id="animation" class="fill-screen"></canvas>
+        <canvas id="overlay" class="fill-screen"></canvas>
+        <svg id="foreground" class="fill-screen" xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>
+    </div>
+
+    <div id="sponsor" class="invisible">
+        <p><span id="sponsor-hide" class="text-button invisible"> ✕ </span>community</p>
+        <a id="sponsor-link" href="https://www.facebook.com/EarthWindMap">EarthWindMap</a>
+    </div>
+
+    <div id="details">
+        <p id="status"></p>
+        <div id="location">
+            <p>
+                <span id="location-coord"></span>
+                <span id="location-close" class="invisible text-button"> ✕ </span>
+            </p>
+            <p>
+                <span id="location-wind"></span>
+                <span id="location-wind-units" class="text-button"></span>
+            </p>
+            <p>
+                <span id="location-value"></span>
+                <span id="location-value-units" class="text-button"></span>
+            </p>
+        </div>
+
+        <p id="earth">
+            <span id="show-menu" class="text-button" title="menu">control panel</span>
+            <span id="progress" class="invisible"></span>
+        </p>
+
+        <div id="menu" class="invisible">
+            <!---->
+            <p>Date | 
+                <%-data.data.date%> <%-data.data.time%>:00
+            </p>
+            <p><span id="scale-label">Scale | </span><canvas id="scale"></canvas></p>
+            <p>Source | <span class="text-button"><%- data.data.title %></span></p>
+
+            <script>
+                function createURL(id) {
+                    const currURL = window.location.href
+                    let urlEnding = ''
+                    let urlPage = ''
+                    if(currURL.includes('#')){
+                        urlPage = currURL.split('/')[0]
+                        urlEnding = '#' + currURL.split('#')[1]
+                    }
+                    url = urlPage + '/' + id + urlEnding
+                    window.location.href = url
+                }
+            </script>
+
+            <p class="wind-mode">Level |
+                <% for(var l=1; l <= data.data.nlevels; l++) { %>
+                    <% if(l-1 == data.data.level){ %>
+                        <span class="text-button.highlighted" ><%- l %></span>
+                    <% } else{ %> 
+                        <a class="text-button" href="javascript:void(0)" 
+                        onclick="createURL(id='<%-data.ids[l-1][data.data.time]%>');return false;"><%- l %></a>
+                    <% } %>
+                <% } %>
+            </p>
+            <p class="wind-mode">Time[h] | 
+                <% for(var t=1; t <= data.data.ntimes; t++) { %>
+                    <% if(t-1 == data.data.time){ %>
+                        <span class="text-button.highlighted"><%- t %></span>
+                    <% } else{ %>
+                        <a class="text-button" href="javascript:void(0)" 
+                        onclick="createURL(id='<%-data.ids[data.data.level][t-1]%>');return false;"><%- t %></a>
+                    <% } %>
+                <% } %>
+            </p>
+            <p class="wind-mode">Overlay | 
+                    <span class="text-button" id="overlay-wind" title="Wind Speed">wind</span>
+                <% for (var prop in data.data.vars ) { %>
+                    <span class="text-button" id="overlay-<%- data.data.vars[prop] %>" title="Wind Speed"><%- data.data.vars[prop] %></span>
+                <% } %>
+            </p>
+            <p>Projection | <span
+                class="proj text-button" id="atlantis" title="Atlantis">A</span> – <span
+                class="proj text-button" id="azimuthal_equidistant" title="Azimuthal Equidistant">AE</span> – <span
+                class="proj text-button" id="conic_equidistant" title="Conic Equidistant">CE</span> – <span
+                class="proj text-button" id="equirectangular" title="Equirectangular">E</span> – <span
+                class="proj text-button" id="orthographic" title="Orthographic">O</span> – <span
+                class="proj text-button" id="stereographic" title="Stereographic">S</span> – <span
+                class="proj text-button" id="waterman" title="Waterman Butterfly">WB</span> – <span
+                class="proj text-button" id="winkel3" title="Winkel Tripel">W3</span>
+            </p>
+            <p>
+                <a href="https://coco2-project.eu/" class="internal-link">about</a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fcoco2-project.eu%2Fabout&t=ABOUT&quote=" class="social-icon" title="Facebook">&#xe027;</a>
+                <a href="https://twitter.com/intent/tweet?text=ABOUT%20https%3A%2F%2Fcoco2-project.eu%2Fabout&related=AddToAny,micropat" class="social-icon" title="Twitter">&#xe086;</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js" charset="utf-8"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.0/backbone-min.js" charset="utf-8"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.1.0/topojson.min.js" charset="utf-8"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.3.10/d3.min.js" charset="utf-8"></script>
+
+    <script src="/libs/d3.geo/0.0.0/d3.geo.projection.v0.min.js" charset="utf-8"></script>
+    <script src="/libs/d3.geo/0.0.0/d3.geo.polyhedron.v0.min.js" charset="utf-8"></script>
+    <script src="/libs/when/2.6.0/when.js" charset="utf-8"></script>
+
+    <div class='wind' value='<%- JSON.stringify(data.data.wind) %>'></div>
+    <% for (var prop in data.data.vars ) { %>
+        <div class='<%- data.data.vars[prop] %>' value='<%- JSON.stringify(data.data[data.data.vars[prop]]) %>'></div>
+    <% } %>
+    <div class='header' value='<%- JSON.stringify(data.data.header) %>'></div>
+    <div class='levels' value='<%- JSON.stringify(data.data.levels) %>'></div>
+    <div class='time' value='<%- JSON.stringify(data.data.time) %>'></div>
+    <div class='title' value='<%- JSON.stringify(data.data.title) %>'></div>
+
+    <script src="/libs/earth/1.0.0/micro.js" charset="utf-8"></script>
+    <script src="/libs/earth/1.0.0/globes.js" charset="utf-8"></script>
+    <script src="/libs/earth/1.0.0/products.js" charset="utf-8"></script>
+    <script src="/libs/earth/1.0.0/earth.js" charset="utf-8"></script>
+
+    <%- include('navbar') -%>
+    <link rel="stylesheet" type="text/css" href="/styles/styles.css"/>
+</body>
+</html>

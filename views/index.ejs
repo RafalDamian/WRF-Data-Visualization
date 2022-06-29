@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html itemscope itemtype="http://schema.org/Map" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
+    <meta charset="utf-8"/>
+    <title>CoCO2 WRF Visualization</title>
+    <meta itemprop="name"                                      content="earth"/>
+    <meta itemprop="description"     name="description"        content="an animated map of global wind and weather"/>
+    <meta itemprop="author"          name="author"             content="Rafal Damian"/>
+
+    <meta property="og:type"        content="website"/>
+    <meta property="og:title"       content="earth"/>
+    <meta property="og:description" content="An animated map of global wind and weather. Visit the community at https://www.facebook.com/EarthWindMap"/>
+    <meta property="og:url"         content="http://earth.nullschool.net"/>
+    <meta property="og:image"       content="http://earth.nullschool.net/preview.jpg"/>
+
+    <link rel="shortcut icon" href="img/favicon.ico"/>
+    <link rel="apple-touch-icon" sizes="120x120" href="img/iphone-icon.png"/>
+    <link rel="apple-touch-icon" sizes="152x152" href="img/ipad-icon.png"/>
+    <link rel="stylesheet" type="text/css" href="/styles/styles.css"/>
+
+    <link rel="alternate" hreflang="x-default" href="http://earth.nullschool.net/"/>
+    <link rel="alternate" hreflang="ja" href="http://earth.nullschool.net/jp/"/>
+
+    
+</head>
+<body data-lang="en">
+
+    <style>
+        .container {
+          height: 80vh;
+          position: relative;
+        }
+        
+        .center {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -ms-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+        </style>
+    
+    <%- include('navbar') -%>
+    <div class="container">
+        <div class="center">
+            <img src="/img/coco2logo.png" alt="CoCO2" style="width:500px;">
+        </div>
+    </div>
+
+
+    <link rel="stylesheet" type="text/css" href="/styles/styles.css"/>
+</body>
+</html>
