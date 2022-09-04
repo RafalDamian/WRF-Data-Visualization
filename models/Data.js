@@ -13,5 +13,5 @@ const DataSchema = mongoose.Schema({
     nlevels: {type: Number, require: true},
     header: {type: {}, require: true},
     units: {type: {}, require: true} 
-})
+},  {strict: false})
 module.exports = mongoose.model('Data', DataSchema)
