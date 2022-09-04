@@ -12,7 +12,7 @@ class NetCDFpost:
         self.file = netcdf_file_path
         self.input_data = nc.Dataset(netcdf_file_path)
         self.vars = variables #dict: {var_name: {'vars':[vars], 'offset':n},...}
-        #does not include: lon, lat, time, u, v - they are obligatory
+        #does not include: lon, lat, time, u, v - these are obligatory
 
     def process(self, url):
         times = len(self.input_data['time'])
@@ -48,7 +48,6 @@ class NetCDFpost:
                     print(f'Processing {var}...', file=sys.stdout)
                     var_arr = self._read_var_as_array(self.vars[var]['vars'], time,
                                                         self.vars[var]['offset'])
-                    #post_data[var] = []
                     post_data[var]=(self._reshape_data(nx, ny, var_arr, level))
                 self._post_req(url, post_data, time, level)
                 
