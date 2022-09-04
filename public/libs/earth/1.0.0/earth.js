@@ -9,42 +9,42 @@
 (function() {
     "use strict";
 
-    var SECOND = 1000;
-    var MINUTE = 60 * SECOND;
-    var HOUR = 60 * MINUTE;
-    var MAX_TASK_TIME = 100;                  // amount of time before a task yields control (millis)
-    var MIN_SLEEP_TIME = 25;                  // amount of time a task waits before resuming (millis)
-    var MIN_MOVE = 4;                         // slack before a drag operation beings (pixels)
-    var MOVE_END_WAIT = 10;                 // time to wait for a move operation to be considered done (millis)
+    let SECOND = 1000;
+    let MINUTE = 60 * SECOND;
+    let HOUR = 60 * MINUTE;
+    let MAX_TASK_TIME = 100;                  // amount of time before a task yields control (millis)
+    let MIN_SLEEP_TIME = 25;                  // amount of time a task waits before resuming (millis)
+    let MIN_MOVE = 4;                         // slack before a drag operation beings (pixels)
+    let MOVE_END_WAIT = 10;                 // time to wait for a move operation to be considered done (millis)
 
-    var OVERLAY_ALPHA = Math.floor(0.4*255);  // overlay transparency (on scale [0, 255])
-    var INTENSITY_SCALE_STEP = 10;            // step size of particle intensity color scale
-    var MAX_PARTICLE_AGE = 400;               // max number of frames a particle is drawn before regeneration
-    var PARTICLE_LINE_WIDTH = 1.2;            // line width of a drawn particle
-    var PARTICLE_MULTIPLIER = 7;              // particle count scalar (completely arbitrary--this values looks nice)
-    var PARTICLE_REDUCTION = 0.75;            // reduce particle count to this much of normal for mobile devices
-    var FRAME_RATE = 40;                      // desired milliseconds per frame
+    let OVERLAY_ALPHA = Math.floor(0.4*255);  // overlay transparency (on scale [0, 255])
+    let INTENSITY_SCALE_STEP = 10;            // step size of particle intensity color scale
+    let MAX_PARTICLE_AGE = 20;               // max number of frames a particle is drawn before regeneration
+    let PARTICLE_LINE_WIDTH = 0.4;            // line width of a drawn particle
+    let PARTICLE_MULTIPLIER = 1.2;              // particle count scalar (completely arbitrary--this values looks nice)
+    let PARTICLE_REDUCTION = 0.75;            // reduce particle count to this much of normal for mobile devices
+    let FRAME_RATE = 100;                      // desired milliseconds per frame
 
-    var NULL_WIND_VECTOR = [NaN, NaN, null];  // singleton for undefined location outside the vector field [u, v, mag]
-    var HOLE_VECTOR = [NaN, NaN, null];       // singleton that signifies a hole in the vector field
-    var TRANSPARENT_BLACK = [0, 0, 0, 0];     // singleton 0 rgba
-    var REMAINING = "▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫";   // glyphs for remaining progress bar
-    var COMPLETED = "▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪";   // glyphs for completed progress bar
+    let NULL_WIND_VECTOR = [NaN, NaN, null];  // singleton for undefined location outside the vector field [u, v, mag]
+    let HOLE_VECTOR = [NaN, NaN, null];       // singleton that signifies a hole in the vector field
+    let TRANSPARENT_BLACK = [0, 0, 0, 0];     // singleton 0 rgba
+    let REMAINING = "▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫▫";   // glyphs for remaining progress bar
+    let COMPLETED = "▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪";   // glyphs for completed progress bar
 
-    var view = µ.view();
-    var log = µ.log();
+    let view = µ.view();
+    let log = µ.log();
 
     /**
      * An object to display various types of messages to the user.
      */
-    var report = function() {
-        var s = d3.select("#status"), p = d3.select("#progress"), total = REMAINING.length;
+    let report = function() {
+        let s = d3.select("#status"), p = d3.select("#progress"), total = REMAINING.length;
         return {
             status: function(msg) {
                 return s.classed("bad") ? s : s.text(msg);  // errors are sticky until reset
             },
             error: function(err) {
-                var msg = err.status ? err.status + " " + err.message : err;
+                let msg = err.status ? err.status + " " + err.message : err;
                 switch (err.status) {
                     case -1: msg = "Server Down"; break;
                     case 404: msg = "No Data"; break;
@@ -57,8 +57,8 @@
             },
             progress: function(amount) {  // amount of progress to report in the range [0, 1]
                 if (0 <= amount && amount < 1) {
-                    var i = Math.ceil(amount * total);
-                    var bar = COMPLETED.substr(0, i) + REMAINING.substr(0, total - i);
+                    let i = Math.ceil(amount * total);
+                    let bar = COMPLETED.substr(0, i) + REMAINING.substr(0, total - i);
                     return p.classed("invisible", false).text(bar);
                 }
                 return p.classed("invisible", true).text("");  // progress complete
@@ -72,16 +72,16 @@
 
     // Construct the page's main internal components:
 
-    var configuration =
+    let configuration =
         µ.buildConfiguration(globes, products.overlayTypes);  // holds the page's current configuration settings
-    var inputController = buildInputController();             // interprets drag/zoom operations
-    var meshAgent = newAgent();      // map data for the earth
-    var globeAgent = newAgent();     // the model of the globe
-    var gridAgent = newAgent();      // the grid of weather data
-    var rendererAgent = newAgent();  // the globe SVG renderer
-    var fieldAgent = newAgent();     // the interpolated wind vector field
-    var animatorAgent = newAgent();  // the wind animator
-    var overlayAgent = newAgent();   // color overlay over the animation
+    let inputController = buildInputController();             // interprets drag/zoom operations
+    let meshAgent = newAgent();      // map data for the earth
+    let globeAgent = newAgent();     // the model of the globe
+    let gridAgent = newAgent();      // the grid of weather data
+    let rendererAgent = newAgent();  // the globe SVG renderer
+    let fieldAgent = newAgent();     // the interpolated wind vector field
+    let animatorAgent = newAgent();  // the wind animator
+    let overlayAgent = newAgent();   // color overlay over the animation
 
     /**
      * The input controller is an object that translates move operations (drag and/or zoom) into mutations of the
@@ -106,7 +106,7 @@
      * for normal clicks. Spurious moves emit no events.
      */
     function buildInputController() {
-        var globe, op = null;
+        let globe, op = null;
 
         /**
          * @returns {Object} an object to represent the state for one move operation.
@@ -120,15 +120,15 @@
             };
         }
 
-        var zoom = d3.behavior.zoom()
+        let zoom = d3.behavior.zoom()
             .on("zoomstart", function() {
                 op = op || newOp(d3.mouse(this), zoom.scale());  // a new operation begins
             })
             .on("zoom", function() {
-                var currentMouse = d3.mouse(this), currentScale = d3.event.scale;
+                let currentMouse = d3.mouse(this), currentScale = d3.event.scale;
                 op = op || newOp(currentMouse, 1);  // Fix bug on some browsers where zoomstart fires out of order.
                 if (op.type === "click" || op.type === "spurious") {
-                    var distanceMoved = µ.distance(currentMouse, op.startMouse);
+                    let distanceMoved = µ.distance(currentMouse, op.startMouse);
                     if (currentScale === op.startScale && distanceMoved < MIN_MOVE) {
                         // to reduce annoyance, ignore op if mouse has barely moved and no zoom is occurring
                         op.type = distanceMoved > 0 ? "click" : "spurious";
@@ -156,7 +156,7 @@
                 op = null;  // the drag/zoom/click operation is over
             });
 
-        var signalEnd = _.debounce(function() {
+        let signalEnd = _.debounce(function() {
             if (!op || op.type !== "drag" && op.type !== "zoom") {
                 configuration.save({orientation: globe.orientation()}, {source: "moveEnd"});
                 dispatch.trigger("moveEnd");
@@ -169,7 +169,7 @@
                 report.status("Finding current position...");
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     report.status("");
-                    var coord = [pos.coords.longitude, pos.coords.latitude], rotate = globe.locate(coord);
+                    let coord = [pos.coords.longitude, pos.coords.latitude], rotate = globe.locate(coord);
                     if (rotate) {
                         globe.projection.rotate(rotate);
                         configuration.save({orientation: globe.orientation()});  // triggers reorientation
@@ -180,7 +180,7 @@
         });
 
         function reorient() {
-            var options = arguments[3] || {};
+            let options = arguments[3] || {};
             if (!globe || options.source === "moveEnd") {
                 // reorientation occurred because the user just finished a move operation, so globe is already
                 // oriented correctly.
@@ -192,7 +192,7 @@
             dispatch.trigger("moveEnd");
         }
 
-        var dispatch = _.extend({
+        let dispatch = _.extend({
             globe: function(_) {
                 if (_) {
                     globe = _;
@@ -209,23 +209,24 @@
      * @param resource the GeoJSON resource's URL
      * @returns {Object} a promise for GeoJSON topology features: {boundaryLo:, boundaryHi:}
      */
+    //TODO nazwy skladowych topojsona 
     function buildMesh(resource) {
-        var cancel = this.cancel;
+        let cancel = this.cancel;
         report.status("Downloading...");
         return µ.loadJson(resource).then(function(topo) {
             if (cancel.requested) return null;
             log.time("building meshes");
-            var o = topo.objects;
-            var coastLo = topojson.feature(topo, µ.isMobile() ? o.coastline_tiny : o.coastline_110m);
-            var coastHi = topojson.feature(topo, µ.isMobile() ? o.coastline_110m : o.coastline_50m);
-            var lakesLo = topojson.feature(topo, µ.isMobile() ? o.lakes_tiny : o.lakes_110m);
-            var lakesHi = topojson.feature(topo, µ.isMobile() ? o.lakes_110m : o.lakes_50m);
+            let o = topo.objects;
+            let coastLo = topojson.feature(topo, µ.isMobile() ? o.coastline_tiny : o.coastline_50m);
+            let coastHi = topojson.feature(topo, µ.isMobile() ? o.coastline_110m : o.coastline_50m);
+            let riversLo = topojson.feature(topo, µ.isMobile() ? o.rivers_tiny : o.rivers_50m);
+            let riversHi = topojson.feature(topo, µ.isMobile() ? o.rivers_110m : o.rivers_50m);
             log.timeEnd("building meshes");
             return {
                 coastLo: coastLo,
                 coastHi: coastHi,
-                lakesLo: lakesLo,
-                lakesHi: lakesHi
+                riversLo: riversLo,
+                riversHi: riversHi,
             };
         });
     }
@@ -235,7 +236,7 @@
      * @returns {Object} a promise for a globe object.
      */
     function buildGlobe(projectionName) {
-        var builder = globes.get(projectionName);
+        let builder = globes.get(projectionName);
         if (!builder) {
             return when.reject("Unknown projection: " + projectionName);
         }
@@ -243,16 +244,16 @@
     }
 
     // Some hacky stuff to ensure only one download can be in progress at a time.
-    var downloadsInProgress = 0;
+    let downloadsInProgress = 0;
 
     function buildGrids() {
         report.status("Downloading...");
         log.time("build grids");
         // UNDONE: upon failure to load a product, the unloaded product should still be stored in the agent.
         //         this allows us to use the product for navigation and other state.
-        var cancel = this.cancel;
+        let cancel = this.cancel;
         downloadsInProgress++;
-        var loaded = when.map(products.productsFor(configuration.attributes), function(product) {
+        let loaded = when.map(products.productsFor(configuration.attributes), function(product) {
             return product.load(cancel);
         });
         return when.all(loaded).then(function(products) {
@@ -271,7 +272,7 @@
             log.debug("Download in progress--ignoring nav request.");
             return;
         }
-        var next = gridAgent.value().primaryGrid.navigate(step);
+        let next = gridAgent.value().primaryGrid.navigate(step);
         if (next) {
             configuration.save(µ.dateToConfig(next));
         }
@@ -284,7 +285,7 @@
         log.time("rendering map");
 
         // UNDONE: better way to do the following?
-        var dispatch = _.clone(Backbone.Events);
+        let dispatch = _.clone(Backbone.Events);
         if (rendererAgent._previous) {
             rendererAgent._previous.stopListening();
         }
@@ -296,9 +297,9 @@
         // Create new map svg elements.
         globe.defineMap(d3.select("#map"), d3.select("#foreground"));
 
-        var path = d3.geo.path().projection(globe.projection).pointRadius(7);
-        var coastline = d3.select(".coastline");
-        var lakes = d3.select(".lakes");
+        let path = d3.geo.path().projection(globe.projection).pointRadius(7);
+        let coastline = d3.select(".coastline");
+        let rivers = d3.select(".lakes");
         d3.selectAll("path").attr("d", path);  // do an initial draw -- fixes issue with safari
 
         function drawLocationMark(point, coord) {
@@ -309,7 +310,7 @@
                 return;  // outside the field boundary, so ignore.
             }
             if (coord && _.isFinite(coord[0]) && _.isFinite(coord[1])) {
-                var mark = d3.select(".location-mark");
+                let mark = d3.select(".location-mark");
                 if (!mark.node()) {
                     mark = d3.select("#foreground").append("path").attr("class", "location-mark");
                 }
@@ -323,8 +324,8 @@
         }
 
         // Throttled draw method helps with slow devices that would get overwhelmed by too many redraw events.
-        var REDRAW_WAIT = 5;  // milliseconds
-        var doDraw_throttled = _.throttle(doDraw, REDRAW_WAIT, {leading: false});
+        let REDRAW_WAIT = 5;  // milliseconds
+        let doDraw_throttled = _.throttle(doDraw, REDRAW_WAIT, {leading: false});
 
         function doDraw() {
             d3.selectAll("path").attr("d", path);
@@ -337,7 +338,7 @@
             inputController, {
                 moveStart: function() {
                     coastline.datum(mesh.coastLo);
-                    lakes.datum(mesh.lakesLo);
+                    rivers.datum(mesh.riversLo);
                     rendererAgent.trigger("start");
                 },
                 move: function() {
@@ -345,7 +346,7 @@
                 },
                 moveEnd: function() {
                     coastline.datum(mesh.coastHi);
-                    lakes.datum(mesh.lakesHi);
+                    rivers.datum(mesh.riversHi);
                     d3.selectAll("path").attr("d", path);
                     rendererAgent.trigger("render");
                 },
@@ -368,24 +369,24 @@
         log.time("render mask");
 
         // Create a detached canvas, ask the model to define the mask polygon, then fill with an opaque color.
-        var width = view.width, height = view.height;
-        var canvas = d3.select(document.createElement("canvas")).attr("width", width).attr("height", height).node();
-        var context = globe.defineMask(canvas.getContext("2d"));
+        let width = view.width, height = view.height;
+        let canvas = d3.select(document.createElement("canvas")).attr("width", width).attr("height", height).node();
+        let context = globe.defineMask(canvas.getContext("2d"));
         context.fillStyle = "rgba(255, 0, 0, 1)";
         context.fill();
         // d3.select("#display").node().appendChild(canvas);  // make mask visible for debugging
 
-        var imageData = context.getImageData(0, 0, width, height);
-        var data = imageData.data;  // layout: [r, g, b, a, r, g, b, a, ...]
+        let imageData = context.getImageData(0, 0, width, height);
+        let data = imageData.data;  // layout: [r, g, b, a, r, g, b, a, ...]
         log.timeEnd("render mask");
         return {
             imageData: imageData,
             isVisible: function(x, y) {
-                var i = (y * width + x) * 4;
+                let i = (y * width + x) * 4;
                 return data[i + 3] > 0;  // non-zero alpha means pixel is visible
             },
             set: function(x, y, rgba) {
-                var i = (y * width + x) * 4;
+                let i = (y * width + x) * 4;
                 data[i    ] = rgba[0];
                 data[i + 1] = rgba[1];
                 data[i + 2] = rgba[2];
@@ -402,7 +403,7 @@
          *          is undefined at that point.
          */
         function field(x, y) {
-            var column = columns[Math.round(x)];
+            let column = columns[Math.round(x)];
             return column && column[Math.round(y)] || NULL_WIND_VECTOR;
         }
 
@@ -429,8 +430,8 @@
         };
 
         field.randomize = function(o) {  // UNDONE: this method is terrible
-            var x, y;
-            var safetyNet = 0;
+            let x, y;
+            let safetyNet = 0;
             do {
                 x = Math.round(_.random(bounds.x, bounds.xMax));
                 y = Math.round(_.random(bounds.y, bounds.yMax));
@@ -450,9 +451,9 @@
      * vector is modified in place and returned by this function.
      */
     function distort(projection, λ, φ, x, y, scale, wind) {
-        var u = wind[0] * scale;
-        var v = wind[1] * scale;
-        var d = µ.distortion(projection, λ, φ, x, y);
+        let u = wind[0] * scale;
+        let v = wind[1] * scale;
+        let d = µ.distortion(projection, λ, φ, x, y);
 
         // Scale distortion vectors by u and v, then add.
         wind[0] = d[0] * u + d[2] * v;
@@ -463,39 +464,39 @@
     function interpolateField(globe, grids) {
         if (!globe || !grids) return null;
 
-        var mask = createMask(globe);
-        var primaryGrid = grids.primaryGrid;
-        var overlayGrid = grids.overlayGrid;
+        let mask = createMask(globe);
+        let primaryGrid = grids.primaryGrid;
+        let overlayGrid = grids.overlayGrid;
 
         log.time("interpolating field");
-        var d = when.defer(), cancel = this.cancel;
+        let d = when.defer(), cancel = this.cancel;
 
-        var projection = globe.projection;
-        var bounds = globe.bounds(view);
+        let projection = globe.projection;
+        let bounds = globe.bounds(view);
         // How fast particles move on the screen (arbitrary value chosen for aesthetics).
-        var velocityScale = bounds.height * primaryGrid.particles.velocityScale;
+        let velocityScale = bounds.height * primaryGrid.particles.velocityScale;
 
-        var columns = [];
-        var point = [];
-        var x = bounds.x;
-        var interpolate = primaryGrid.interpolate;
-        var overlayInterpolate = overlayGrid.interpolate;
-        var hasDistinctOverlay = primaryGrid !== overlayGrid;
-        var scale = overlayGrid.scale;
+        let columns = [];
+        let point = [];
+        let x = bounds.x;
+        let interpolate = primaryGrid.interpolate;
+        let overlayInterpolate = overlayGrid.interpolate;
+        let hasDistinctOverlay = primaryGrid !== overlayGrid;
+        let scale = overlayGrid.scale;
 
         function interpolateColumn(x) {
-            var column = [];
-            for (var y = bounds.y; y <= bounds.yMax; y += 2) {
+            let column = [];
+            for (let y = bounds.y; y <= bounds.yMax; y += 2) {
                 if (mask.isVisible(x, y)) {
                     point[0] = x; point[1] = y;
-                    var coord = projection.invert(point);
-                    var color = TRANSPARENT_BLACK;
-                    var wind = null;
+                    let coord = projection.invert(point);
+                    let color = TRANSPARENT_BLACK;
+                    let wind = null;
                     if (coord) {
-                        var λ = coord[0], φ = coord[1];
+                        let λ = coord[0], φ = coord[1];
                         if (isFinite(λ)) {
                             wind = interpolate(λ, φ);
-                            var scalar = null;
+                            let scalar = null;
                             if (wind) {
                                 wind = distort(projection, λ, φ, x, y, velocityScale, wind);
                                 scalar = wind[2];
@@ -520,7 +521,7 @@
         (function batchInterpolate() {
             try {
                 if (!cancel.requested) {
-                    var start = Date.now();
+                    let start = Date.now();
                     while (x < bounds.xMax) {
                         interpolateColumn(x);
                         x += 2;
@@ -547,20 +548,20 @@
     function animate(globe, field, grids) {
         if (!globe || !field || !grids) return;
 
-        var cancel = this.cancel;
-        var bounds = globe.bounds(view);
+        let cancel = this.cancel;
+        let bounds = globe.bounds(view);
         // maxIntensity is the velocity at which particle color intensity is maximum
-        var colorStyles = µ.windIntensityColorScale(INTENSITY_SCALE_STEP, grids.primaryGrid.particles.maxIntensity);
-        var buckets = colorStyles.map(function() { return []; });
-        var particleCount = Math.round(bounds.width * PARTICLE_MULTIPLIER);
+        let colorStyles = µ.windIntensityColorScale(INTENSITY_SCALE_STEP, grids.primaryGrid.particles.maxIntensity);
+        let buckets = colorStyles.map(function() { return []; });
+        let particleCount = Math.round(bounds.width * PARTICLE_MULTIPLIER);
         if (µ.isMobile()) {
             particleCount *= PARTICLE_REDUCTION;
         }
-        var fadeFillStyle = µ.isFF() ? "rgba(0, 0, 0, 0.95)" : "rgba(0, 0, 0, 0.97)";  // FF Mac alpha behaves oddly
+        let fadeFillStyle = µ.isFF() ? "rgba(0, 0, 0, 0.95)" : "rgba(0, 0, 0, 0.97)";  // FF Mac alpha behaves oddly
 
         log.debug("particle count: " + particleCount);
-        var particles = [];
-        for (var i = 0; i < particleCount; i++) {
+        let particles = [];
+        for (let i = 0; i < particleCount; i++) {
             particles.push(field.randomize({age: _.random(0, MAX_PARTICLE_AGE)}));
         }
 
@@ -570,16 +571,16 @@
                 if (particle.age > MAX_PARTICLE_AGE) {
                     field.randomize(particle).age = 0;
                 }
-                var x = particle.x;
-                var y = particle.y;
-                var v = field(x, y);  // vector at current position
-                var m = v[2];
+                let x = particle.x;
+                let y = particle.y;
+                let v = field(x, y);  // vector at current position
+                let m = v[2];
                 if (m === null) {
                     particle.age = MAX_PARTICLE_AGE;  // particle has escaped the grid, never to return...
                 }
                 else {
-                    var xt = x + v[0];
-                    var yt = y + v[1];
+                    let xt = x + v[0];
+                    let yt = y + v[1];
                     if (field.isDefined(xt, yt)) {
                         // Path from (x,y) to (xt,yt) is visible, so add this particle to the appropriate draw bucket.
                         particle.xt = xt;
@@ -596,13 +597,13 @@
             });
         }
 
-        var g = d3.select("#animation").node().getContext("2d");
+        let g = d3.select("#animation").node().getContext("2d");
         g.lineWidth = PARTICLE_LINE_WIDTH;
         g.fillStyle = fadeFillStyle;
 
         function draw() {
             // Fade existing particle trails.
-            var prev = g.globalCompositeOperation;
+            let prev = g.globalCompositeOperation;
             g.globalCompositeOperation = "destination-in";
             g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
             g.globalCompositeOperation = prev;
@@ -644,7 +645,7 @@
 
         ctx.fillStyle = "rgba(255, 255, 255, 1)";
         // Use the clipping behavior of a projection stream to quickly draw visible points.
-        var stream = globe.projection.stream({
+        let stream = globe.projection.stream({
             point: function(x, y) {
                 ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
             }
@@ -659,7 +660,7 @@
     function drawOverlay(field, overlayType) {
         if (!field) return;
 
-        var ctx = d3.select("#overlay").node().getContext("2d"), grid = (gridAgent.value() || {}).overlayGrid;
+        let ctx = d3.select("#overlay").node().getContext("2d"), grid = (gridAgent.value() || {}).overlayGrid;
 
         µ.clearCanvas(d3.select("#overlay").node());
         µ.clearCanvas(d3.select("#scale").node());
@@ -672,21 +673,21 @@
 
         if (grid) {
             // Draw color bar for reference.
-            var colorBar = d3.select("#scale"), scale = grid.scale, bounds = scale.bounds;
-            var c = colorBar.node(), g = c.getContext("2d"), n = c.width - 1;
-            for (var i = 0; i <= n; i++) {
-                var rgb = scale.gradient(µ.spread(i / n, bounds[0], bounds[1]), 1);
+            let colorBar = d3.select("#scale"), scale = grid.scale, bounds = scale.bounds;
+            let c = colorBar.node(), g = c.getContext("2d"), n = c.width - 1;
+            for (let i = 0; i <= n; i++) {
+                let rgb = scale.gradient(µ.spread(i / n, bounds[0], bounds[1]), 1);
                 g.fillStyle = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
                 g.fillRect(i, 0, 1, c.height);
             }
 
             // Show tooltip on hover.
             colorBar.on("mousemove", function() {
-                var x = d3.mouse(this)[0];
-                var pct = µ.clamp((Math.round(x) - 2) / (n - 2), 0, 1);
-                var value = µ.spread(pct, bounds[0], bounds[1]);
-                var elementId = grid.type === "wind" ? "#location-wind-units" : "#location-value-units";
-                var units = createUnitToggle(elementId, grid).value();
+                let x = d3.mouse(this)[0];
+                let pct = µ.clamp((Math.round(x) - 2) / (n - 2), 0, 1);
+                let value = µ.spread(pct, bounds[0], bounds[1]);
+                let elementId = grid.type === "wind" ? "#location-wind-units" : "#location-value-units";
+                let units = createUnitToggle(elementId, grid).value();
                 colorBar.attr("title", µ.formatScalar(value, units) + " " + units.label);
             });
         }
@@ -700,10 +701,10 @@
     function validityDate(grids) {
         // When the active layer is considered "current", use its time as now, otherwise use current time as
         // now (but rounded down to the nearest three-hour block).
-        var THREE_HOURS = 3 * HOUR;
-        var now = grids ? grids.primaryGrid.date.getTime() : Math.floor(Date.now() / THREE_HOURS) * THREE_HOURS;
-        var parts = configuration.get("date").split("/");  // yyyy/mm/dd or "current"
-        var hhmm = configuration.get("hour");
+        let THREE_HOURS = 3 * HOUR;
+        let now = grids ? grids.primaryGrid.date.getTime() : Math.floor(Date.now() / THREE_HOURS) * THREE_HOURS;
+        let parts = configuration.get("date").split("/");  // yyyy/mm/dd or "current"
+        let hhmm = configuration.get("hour");
         return parts.length > 1 ?
             Date.UTC(+parts[0], parts[1] - 1, +parts[2], +hhmm.substring(0, 2)) :
             parts[0] === "current" ? now : null;
@@ -713,8 +714,8 @@
      * Display the grid's validity date in the menu. Allow toggling between local and UTC time.
      */
     function showDate(grids) {
-        var date = new Date(validityDate(grids)), isLocal = d3.select("#data-date").classed("local");
-        var formatted = isLocal ? µ.toLocalISO(date) : µ.toUTCISO(date);
+        let date = new Date(validityDate(grids)), isLocal = d3.select("#data-date").classed("local");
+        let formatted = isLocal ? µ.toLocalISO(date) : µ.toUTCISO(date);
         d3.select("#data-date").text(formatted + " " + (isLocal ? "Local" : "UTC"));
         d3.select("#toggle-zone").text("⇄ " + (isLocal ? "UTC" : "Local"));
     }
@@ -724,10 +725,10 @@
      */
     function showGridDetails(grids) {
         //showDate(grids);
-        var description = "", center = "";
+        let description = "", center = "";
         if (grids) {
-            var langCode = d3.select("body").attr("data-lang") || "en";
-            var pd = grids.primaryGrid.description(langCode), od = grids.overlayGrid.description(langCode);
+            let langCode = d3.select("body").attr("data-lang") || "en";
+            let pd = grids.primaryGrid.description(langCode), od = grids.overlayGrid.description(langCode);
             description = od.name + od.qualifier;
             if (grids.primaryGrid !== grids.overlayGrid) {
                 // Combine both grid descriptions together with a " + " if their qualifiers are the same.
@@ -746,8 +747,8 @@
      * currently active units object. Calling next() increments the index.
      */
     function createUnitToggle(id, product) {
-        var units = product.units, size = units.length;
-        var index = +(d3.select(id).attr("data-index") || 0) % size;
+        let units = product.units, size = units.length;
+        let index = +(d3.select(id).attr("data-index") || 0) % size;
         return {
             value: function() {
                 return units[index];
@@ -762,7 +763,7 @@
      * Display the specified wind value. Allow toggling between the different types of wind units.
      */
     function showWindAtLocation(wind, product) {
-        var unitToggle = createUnitToggle("#location-wind-units", product), units = unitToggle.value();
+        let unitToggle = createUnitToggle("#location-wind-units", product), units = unitToggle.value();
         d3.select("#location-wind").text(µ.formatVector(wind, units));
         d3.select("#location-wind-units").text(units.label).on("click", function() {
             unitToggle.next();
@@ -774,7 +775,7 @@
      * Display the specified overlay value. Allow toggling between the different types of supported units.
      */
     function showOverlayValueAtLocation(value, product) {
-        var unitToggle = createUnitToggle("#location-value-units", product), units = unitToggle.value();
+        let unitToggle = createUnitToggle("#location-value-units", product), units = unitToggle.value();
         d3.select("#location-value").text(µ.formatScalar(value, units));
         d3.select("#location-value-units").text(units.label).on("click", function() {
             unitToggle.next();
@@ -784,7 +785,7 @@
 
     // Stores the point and coordinate of the currently visible location. This is used to update the location
     // details when the field changes.
-    var activeLocation = {};
+    let activeLocation = {};
 
     /**
      * Display a local data callout at the given [x, y] point and its corresponding [lon, lat] coordinates.
@@ -794,7 +795,7 @@
     function showLocationDetails(point, coord) {
         point = point || [];
         coord = coord || [];
-        var grids = gridAgent.value(), field = fieldAgent.value(), λ = coord[0], φ = coord[1];
+        let grids = gridAgent.value(), field = fieldAgent.value(), λ = coord[0], φ = coord[1];
         if (!field || !field.isInsideBoundary(point[0], point[1])) {
             return;
         }
@@ -808,12 +809,12 @@
         }
 
         if (field.isDefined(point[0], point[1]) && grids) {
-            var wind = grids.primaryGrid.interpolate(λ, φ);
+            let wind = grids.primaryGrid.interpolate(λ, φ);
             if (µ.isValue(wind)) {
                 showWindAtLocation(wind, grids.primaryGrid);
             }
             if (grids.overlayGrid !== grids.primaryGrid) {
-                var value = grids.overlayGrid.interpolate(λ, φ);
+                let value = grids.overlayGrid.interpolate(λ, φ);
                 if (µ.isValue(value)) {
                     showOverlayValueAtLocation(value, grids.overlayGrid);
                 }
@@ -859,7 +860,7 @@
             configuration.save(newAttr);
         });
         configuration.on("change", function(model) {
-            var attr = model.attributes;
+            let attr = model.attributes;
             d3.select(elementId).classed("highlighted", _.isEqual(_.pick(attr, keys), _.pick(newAttr, keys)));
         });
     }
@@ -887,7 +888,7 @@
 
         d3.selectAll(".fill-screen").attr("width", view.width).attr("height", view.height);
         // Adjust size of the scale canvas to fill the width of the menu to the right of the label.
-        var label = d3.select("#scale-label").node();
+        let label = d3.select("#scale-label").node();
         d3.select("#scale")
             .attr("width", (d3.select("#menu").node().offsetWidth - label.offsetWidth) * 0.97)
             .attr("height", label.offsetHeight / 2);
@@ -931,16 +932,16 @@
         });
 
         gridAgent.listenTo(configuration, "change", function() {
-            var changed = _.keys(configuration.changedAttributes()), rebuildRequired = false;
+            let changed = _.keys(configuration.changedAttributes()), rebuildRequired = false;
 
             // Build a new grid if any layer-related attributes have changed.
             if (_.intersection(changed, ["date", "hour", "param", "surface", "level"]).length > 0) {
                 rebuildRequired = true;
             }
             // Build a new grid if the new overlay type is different from the current one.
-            var overlayType = configuration.get("overlayType") || "default";
+            let overlayType = configuration.get("overlayType") || "default";
             if (_.indexOf(changed, "overlayType") >= 0 && overlayType !== "off") {
-                var grids = (gridAgent.value() || {}), primary = grids.primaryGrid, overlay = grids.overlayGrid;
+                let grids = (gridAgent.value() || {}), primary = grids.primaryGrid, overlay = grids.overlayGrid;
                 if (!overlay) {
                     // Do a rebuild if we have no overlay grid.
                     rebuildRequired = true;
@@ -997,7 +998,7 @@
             overlayAgent.submit(drawOverlay, fieldAgent.value(), null);
         });
         overlayAgent.listenTo(configuration, "change", function() {
-            var changed = _.keys(configuration.changedAttributes())
+            let changed = _.keys(configuration.changedAttributes())
             // if only overlay relevant flags have changed...
             if (_.intersection(changed, ["overlayType", "showGridPoints"]).length > 0) {
                 overlayAgent.submit(drawOverlay, fieldAgent.value(), configuration.get("overlayType"));
@@ -1009,26 +1010,6 @@
         fieldAgent.on("update", updateLocationDetails);
         d3.select("#location-close").on("click", _.partial(clearLocationDetails, true));
 
-        // Modify menu depending on what mode we're in.
-        configuration.on("change:param", function(context, mode) {
-            d3.selectAll(".ocean-mode").classed("invisible", mode !== "ocean");
-            d3.selectAll(".wind-mode").classed("invisible", mode !== "wind");
-            switch (mode) {
-                case "wind":
-                    d3.select("#nav-backward-more").attr("title", "-2 Hours");
-                    d3.select("#nav-backward").attr("title", "-1 Hours");
-                    d3.select("#nav-forward").attr("title", "+1 Hours");
-                    d3.select("#nav-forward-more").attr("title", "+2 Hours");
-                    break;
-                case "ocean":
-                    d3.select("#nav-backward-more").attr("title", "-1 Month");
-                    d3.select("#nav-backward").attr("title", "-5 Days");
-                    d3.select("#nav-forward").attr("title", "+5 Days");
-                    d3.select("#nav-forward-more").attr("title", "+1 Month");
-                    break;
-            }
-        });
-
         // Add handlers for mode buttons.
         d3.select("#wind-mode-enable").on("click", function() {
             if (configuration.get("param") !== "wind") {
@@ -1036,11 +1017,7 @@
             }
         });
         configuration.on("change:param", function(x, param) {
-            param = 'DUPA tu zmieniamy parametr'
             d3.select("#wind-mode-enable").classed("highlighted", param === "wind");
-        });
-        configuration.on("change:param", function(x, param) {
-            d3.select("#ocean-mode-enable").classed("highlighted", param === "ocean");
         });
 
         // Add logic to disable buttons that are incompatible with each other.
@@ -1052,13 +1029,6 @@
             d3.select("#overlay-wind_power_density").classed("disabled", s === "surface");
         });
 
-        // Add event handlers for the time navigation buttons.
-        d3.select("#nav-backward-more").on("click", navigate.bind(null, -10));
-        d3.select("#nav-forward-more" ).on("click", navigate.bind(null, +10));
-        d3.select("#nav-backward"     ).on("click", navigate.bind(null, -1));
-        d3.select("#nav-forward"      ).on("click", navigate.bind(null, +1));
-        d3.select("#nav-now").on("click", function() { configuration.save({date: "current", hour: ""}); });
-
         d3.select("#option-show-grid").on("click", function() {
             configuration.save({showGridPoints: !configuration.get("showGridPoints")});
         });
@@ -1068,12 +1038,9 @@
 
         // Add handlers for all wind level buttons.
         d3.selectAll(".surface").each(function() {
-            var id = this.id, parts = id.split("-");
+            let id = this.id, parts = id.split("-");
             bindButtonToConfiguration("#" + id, {param: "wind", surface: parts[0], level: parts[1]});
         });
-
-        // Add handlers for ocean animation types.
-        bindButtonToConfiguration("#animate-currents", {param: "ocean", surface: "surface", level: "currents"});
 
         // Add handlers for all overlay buttons.
         products.overlayTypes.forEach(function(type) {

@@ -22,6 +22,7 @@ router.post('/', async (req, res) => {
         stime: req.body.ntimes,
         vars: vars,
         header: req.body.header,
+        units: req.body.units
     }
     for (let i in vars){
         data1[vars[i]] = req.body[vars[i]]

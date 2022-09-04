@@ -29,36 +29,17 @@ app.use(fileUpload({
 const Data = require('./models/Data')
 const dirRoutes = './routes'
 const uploadRoute = require(dirRoutes+'/uploadData')
-const viewRoute = require(dirRoutes+'/viewData')
+const plotRoute = require(dirRoutes+'/plotData')
 const deleteRoute = require(dirRoutes+'/deleteData')
 
 app.use('/upload', uploadRoute)
-app.use('/view', viewRoute)
+app.use('/plot', plotRoute)
 app.use('/delete', deleteRoute)
 
 app.get('', async (req, res) => {
     try{
         const files = await Data.find({time: 0, level: 0}).select('title');
-        res.render('index', {data:{files:files}})
-    }catch(error){
-        res.json({"error": error})
-    }
-})
-
-app.get('/:dataID', async (req, res) => {
-    id = req.params.dataID
-    try{
-        const data = await Data.findById(id); 
-        let ids = []
-        let id_i = []
-        for(l=0; l<data.nlevels; l++){
-            ids[l] = []
-            for(t=0; t<data.ntimes; t++){
-                    id_i = await Data.find({title: data.title, level: l, time: t}).select(['_id'])
-                    ids[l].push(id_i[0]['_id'])
-                    }}
-        const files = await Data.find({time: 0, level: 0}).select('title');
-        res.render("plot", { data: {data: data, ids: ids, files: files}})
+        res.render('index', {data:{files:files, plot:false}})
     }catch(error){
         res.json({"error": error})
     }

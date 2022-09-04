@@ -8,22 +8,32 @@
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
-      <ul class="navbar-nav">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Select File
-          </a>
-          <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-            <% for(var i=0; i < data.files.length; i++) { %>
-                <li><a class="dropdown-item" href="/<%= data.files[i].id %>"><%=data.files[i].title%></a></li>
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Select File
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
+          <% for(var i=0; i < data.files.length; i++) { %>
+              <li><a class="dropdown-item" href="/plot/<%= data.files[i].id %>#current/wind/surface/level/orthographic=-335.45,50.57,1688"><%=data.files[i].title%></a></li>
+          <% } %>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="https://github.com/RafalDamian/WRF-Data-Visualization">Documentation</a>
+      </li>
+    </ul>
+      
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <% if(data.plot===true){ %>
+            <a href="/delete/<%= data.ids[0][0] %>" class="btn btn-danger"  confirm="Are your sure?">Delete</a>
             <% } %>
-          </ul>
-        </li>
-      </ul>
-    </div>
+          </li>
+        </ul>
+
   </div>
 </nav>
 
 <!-- Bootstrap script -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>

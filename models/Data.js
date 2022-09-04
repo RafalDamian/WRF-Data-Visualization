@@ -11,7 +11,7 @@ const DataSchema = mongoose.Schema({
     date_uploaded: {type: Date, defoult: Date.now},
     level: {type: Number, require: true},
     nlevels: {type: Number, require: true},
-    header: {type: {}, require: true}, 
-}, {strict: false})
-
+    header: {type: {}, require: true},
+    units: {type: {}, require: true} 
+})
 module.exports = mongoose.model('Data', DataSchema)

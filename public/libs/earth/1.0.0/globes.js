@@ -6,7 +6,7 @@
  *
  * https://github.com/cambecc/earth
  */
-var globes = function() {
+let globes = function() {
     "use strict";
 
     /**
@@ -14,7 +14,7 @@ var globes = function() {
      *          which user may reject, there is not much available except timezone. Better than nothing.
      */
     function currentPosition() {
-        var λ = µ.floorMod(new Date().getTimezoneOffset() / 4, 360);  // 24 hours * 60 min / 4 === 360 degrees
+        let λ = µ.floorMod(new Date().getTimezoneOffset() / 4, 360);  // 24 hours * 60 min / 4 === 360 degrees
         return [λ, 0];
     }
 
@@ -28,12 +28,12 @@ var globes = function() {
      * @returns {Object} the projection bounds clamped to the specified view.
      */
     function clampedBounds(bounds, view) {
-        var upperLeft = bounds[0];
-        var lowerRight = bounds[1];
-        var x = Math.max(Math.floor(ensureNumber(upperLeft[0], 0)), 0);
-        var y = Math.max(Math.floor(ensureNumber(upperLeft[1], 0)), 0);
-        var xMax = Math.min(Math.ceil(ensureNumber(lowerRight[0], view.width)), view.width - 1);
-        var yMax = Math.min(Math.ceil(ensureNumber(lowerRight[1], view.height)), view.height - 1);
+        let upperLeft = bounds[0];
+        let lowerRight = bounds[1];
+        let x = Math.max(Math.floor(ensureNumber(upperLeft[0], 0)), 0);
+        let y = Math.max(Math.floor(ensureNumber(upperLeft[1], 0)), 0);
+        let xMax = Math.min(Math.ceil(ensureNumber(lowerRight[0], view.width)), view.width - 1);
+        let yMax = Math.min(Math.ceil(ensureNumber(lowerRight[1], view.height)), view.height - 1);
         return {x: x, y: y, xMax: xMax, yMax: yMax, width: xMax - x + 1, height: yMax - y + 1};
     }
 
@@ -70,10 +70,10 @@ var globes = function() {
              * @returns {Number} the projection scale at which the entire globe fits within the specified view.
              */
             fit: function(view) {
-                var defaultProjection = this.newProjection(view);
-                var bounds = d3.geo.path().projection(defaultProjection).bounds({type: "Sphere"});
-                var hScale = (bounds[1][0] - bounds[0][0]) / defaultProjection.scale();
-                var vScale = (bounds[1][1] - bounds[0][1]) / defaultProjection.scale();
+                let defaultProjection = this.newProjection(view);
+                let bounds = d3.geo.path().projection(defaultProjection).bounds({type: "Sphere"});
+                let hScale = (bounds[1][0] - bounds[0][0]) / defaultProjection.scale();
+                let vScale = (bounds[1][1] - bounds[0][1]) / defaultProjection.scale();
                 return Math.min(view.width / hScale, view.height / vScale) * 0.9;
             },
 
@@ -89,7 +89,7 @@ var globes = function() {
              * @returns {Array} the range at which this globe can be zoomed.
              */
             scaleExtent: function() {
-                return [25, 30000];
+                return [1, 30000];
             },
 
             /**
@@ -100,10 +100,10 @@ var globes = function() {
              * @param [view] the size of the view as {width:, height:}.
              */
             orientation: function(o, view) {
-                var projection = this.projection, rotate = projection.rotate();
+                let projection = this.projection, rotate = projection.rotate();
                 if (µ.isValue(o)) {
-                    var parts = o.split(","), λ = +parts[0], φ = +parts[1], scale = +parts[2];
-                    var extent = this.scaleExtent();
+                    let parts = o.split(","), λ = +parts[0], φ = +parts[1], scale = +parts[2];
+                    let extent = this.scaleExtent();
                     projection.rotate(_.isFinite(λ) && _.isFinite(φ) ?
                         [-λ, -φ, rotate[2]] :
                         this.newProjection(view).rotate());
@@ -123,16 +123,16 @@ var globes = function() {
              * @param startScale starting scale.
              */
             manipulator: function(startMouse, startScale) {
-                var projection = this.projection;
-                var sensitivity = 60 / startScale;  // seems to provide a good drag scaling factor
-                var rotation = [projection.rotate()[0] / sensitivity, -projection.rotate()[1] / sensitivity];
-                var original = projection.precision();
+                let projection = this.projection;
+                let sensitivity = 50 / startScale;  // seems to provide a good drag scaling factor
+                let rotation = [projection.rotate()[0] / sensitivity, -projection.rotate()[1] / sensitivity];
+                let original = projection.precision();
                 projection.precision(original * 10);
                 return {
                     move: function(mouse, scale) {
                         if (mouse) {
-                            var xd = mouse[0] - startMouse[0] + rotation[0];
-                            var yd = mouse[1] - startMouse[1] + rotation[1];
+                            let xd = mouse[0] - startMouse[0] + rotation[0];
+                            let yd = mouse[1] - startMouse[1] + rotation[1];
                             projection.rotate([xd * sensitivity, -yd * sensitivity, projection.rotate()[2]]);
                         }
                         projection.scale(scale);
@@ -166,8 +166,8 @@ var globes = function() {
              * @param foregroundSvg the foreground SVG container.
              */
             defineMap: function(mapSvg, foregroundSvg) {
-                var path = d3.geo.path().projection(this.projection);
-                var defs = mapSvg.append("defs");
+                let path = d3.geo.path().projection(this.projection);
+                let defs = mapSvg.append("defs");
                 defs.append("path")
                     .attr("id", "sphere")
                     .datum({type: "Sphere"})
@@ -195,7 +195,7 @@ var globes = function() {
     }
 
     function newGlobe(source, view) {
-        var result = _.extend(standardGlobe(), source);
+        let result = _.extend(standardGlobe(), source);
         result.projection = result.newProjection(view);
         return result;
     }
@@ -243,9 +243,9 @@ var globes = function() {
                 return d3.geo.orthographic().rotate(currentPosition()).precision(0.1).clipAngle(90);
             },
             defineMap: function(mapSvg, foregroundSvg) {
-                var path = d3.geo.path().projection(this.projection);
-                var defs = mapSvg.append("defs");
-                var gradientFill = defs.append("radialGradient")
+                let path = d3.geo.path().projection(this.projection);
+                let defs = mapSvg.append("defs");
+                let gradientFill = defs.append("radialGradient")
                     .attr("id", "orthographic-fill")
                     .attr("gradientUnits", "objectBoundingBox")
                     .attr("cx", "50%").attr("cy", "49%").attr("r", "50%");
@@ -299,8 +299,8 @@ var globes = function() {
                 return d3.geo.polyhedron.waterman().rotate([20, 0]).precision(0.1);
             },
             defineMap: function(mapSvg, foregroundSvg) {
-                var path = d3.geo.path().projection(this.projection);
-                var defs = mapSvg.append("defs");
+                let path = d3.geo.path().projection(this.projection);
+                let defs = mapSvg.append("defs");
                 defs.append("path")
                     .attr("id", "sphere")
                     .datum({type: "Sphere"})

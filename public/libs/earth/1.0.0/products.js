@@ -7,19 +7,23 @@
  * https://github.com/cambecc/earth
  */
 
-var products = function() {
+ let products = function() {
     "use strict";
 
-    var WEATHER_PATH = "/data/weather";
-    var OSCAR_PATH = "/data/oscar";
-    var catalogs = {
+    let data_query = "div[class=variables]"
+    let script = document.querySelector(data_query)
+    let VARIABLES = JSON.parse(script.getAttribute('value'))
+
+    let WEATHER_PATH = "/data/weather";
+    let OSCAR_PATH = "/data/oscar";
+    let catalogs = {
         // The OSCAR catalog is an array of file names, sorted and prefixed with yyyyMMdd. Last item is the
         // most recent. For example: [ 20140101-abc.json, 20140106-abc.json, 20140112-abc.json, ... ]
         oscar: µ.loadJson([OSCAR_PATH, "catalog.json"].join("/"))
     };
 
-    function get_gradient(min_value, max_value){
-        let diff = (max_value*1.1 - min_value*0.9) / 10
+    function buildGradient(min_value, max_value){
+        let diff = 1.2 * (max_value - min_value) / 10
         let segments = []
         let value
         let values = []
@@ -27,31 +31,29 @@ var products = function() {
                     [70, 215, 215], [21, 84, 187], [24, 132, 14],   
                     [247, 251, 59], [235, 167, 21], [230, 71, 39], [88, 27, 67]]
         for (let i = 0; i < 10; i++) {
-            value = min_value + i*diff
+            value = min_value + diff * (i - 1)
             values.push(value)
             segments.push([value, scale[i]])}
         return [values, segments]
     }
 
     function buildProduct(overrides) {
-        let script = null
-        let data = null
         let data_query = "div[class=" + overrides.type + "]"
-        script = document.querySelector(data_query)
-        data = JSON.parse(script.getAttribute('value'))
+        let script = document.querySelector(data_query)
+        let data = JSON.parse(script.getAttribute('value'))
+        let unit = script.getAttribute('unit')
         let arr_min = null
         let arr_max = null
         let colorscale = null
         let bounds = null
         let gradient = null
-
         //dynamic scale production
         if (overrides.type !== 'wind'){
             arr_min = Math.min(...data.filter(function(val) {
                 return val !== 0;
             })) //removing zeros
             arr_max = Math.max(...data)
-            colorscale = get_gradient(arr_min, arr_max)
+            colorscale = buildGradient(arr_min, arr_max)
             gradient = µ.segmentedColorScale(colorscale[1])
             bounds = [Math.min(...colorscale[0]), Math.max(...colorscale[0])]}
         else{
@@ -82,7 +84,10 @@ var products = function() {
             scale: {
                 bounds: bounds,
                 gradient: gradient
-            }, 
+            },
+            units: [
+                {label: unit,  conversion: function(x) { return x; }, precision: 2},
+            ],
         }, overrides);
     }
 
@@ -94,18 +99,18 @@ var products = function() {
      * @returns {String}
      */
     function gfs1p0degPath(attr, type, surface, level) {
-        var dir = attr.date, stamp = dir === "current" ? "current" : attr.hour;
-        var file = [stamp, type, surface, level, "gfs", "1.0"].filter(µ.isValue).join("-") + ".json";
+        let dir = attr.date, stamp = dir === "current" ? "current" : attr.hour;
+        let file = [stamp, type, surface, level, "gfs", "1.0"].filter(µ.isValue).join("-") + ".json";
         return [WEATHER_PATH, dir, file].join("/");
     }
 
     function gfsDate(attr) {
         if (attr.date === "current") {
             // Construct the date from the current time, rounding down to the nearest three-hour block.
-            var now = new Date(Date.now()), hour = Math.floor(now.getUTCHours() / 3);
+            let now = new Date(Date.now()), hour = Math.floor(now.getUTCHours() / 3);
             return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hour));
         }
-        var parts = attr.date.split("/");
+        let parts = attr.date.split("/");
         return new Date(Date.UTC(+parts[0], parts[1] - 1, +parts[2], +attr.hour.substr(0, 2)));
     }
 
@@ -114,7 +119,7 @@ var products = function() {
      * to jump is determined by the step. Steps of ±1 move in 3-hour jumps, and steps of ±10 move in 24-hour jumps.
      */
     function gfsStep(date, step) {
-        var offset = (step > 1 ? 8 : step < -1 ? -8 : step) * 3, adjusted = new Date(date);
+        let offset = (step > 1 ? 8 : step < -1 ? -8 : step) * 3, adjusted = new Date(date);
         adjusted.setHours(adjusted.getHours() + offset);
         return adjusted;
     }
@@ -151,7 +156,7 @@ var products = function() {
      */
     function localize(table) {
         return function(langCode) {
-            var result = {};
+            let result = {};
             _.each(table, function(value, key) {
                 result[key] = value[langCode] || value.en || value;
             });
@@ -159,8 +164,7 @@ var products = function() {
         }
     }
 
-    var FACTORIES = {
-
+    let FACTORIES = {
         "wind": {
             matches: _.matches({param: "wind"}),
             create: function(attr) {
@@ -183,158 +187,42 @@ var products = function() {
                             }
                         }
                     },
-                    units: [
-                        {label: "m/s",  conversion: function(x) { return x; },            precision: 1},
-                    ],
-                    particles: {velocityScale: 1/60000, maxIntensity: 17}
-                });
-            }
-        },
-
-        "T": {
-            matches: _.matches({param: "wind", overlayType: "T"}),
-            create: function(attr) {
-                return buildProduct({
-                    field: "scalar",
-                    type: "T",
-                    description: localize({
-                        name: {en: "T"},
-                        qualifier: {en: " @ " + describeSurface(attr)}
-                    }),
-                    builder: function(vars) {
-                        let data = vars['data']
-                        let header = vars['header'].header
-                        return {
-                            header: header,
-                            interpolate: bilinearInterpolateScalar,
-                            data: function(i) {
-                                return data[i];
-                            }
-                        }
-                    },
-                    units: [
-                        {label: "K",  conversion: function(x) { return x; },                precision: 1}
-                    ],     
-                });
-            }
-        },
-
-        "CO2": {
-            matches: _.matches({param: "wind", overlayType: "CO2"}),
-            create: function(attr) {
-                return buildProduct({
-                    field: "scalar",
-                    type: "CO2",
-                    description: localize({
-                        name: {en: "CO2"},
-                        qualifier: {en: " @ " + describeSurface(attr)}
-                    }),
-                    builder: function(vars) {
-                        let data = vars['data']
-                        let header = vars['header'].header
-                        return {
-                            header: header,
-                            interpolate: bilinearInterpolateScalar,
-                            data: function(i) {
-                                return data[i];
-                            }
-                        }
-                    },
-                    units: [
-                        {label: "µmol/mol",  conversion: function(x) { return x; },                precision: 1}
-                    ],
-                    
-                });
-            }
-        },
-
-        "PS": {
-            matches: _.matches({param: "wind", overlayType: "PS"}),
-            create: function(attr) {
-                return buildProduct({
-                    field: "scalar",
-                    type: "PS",
-                    description: localize({
-                        name: {en: "PS"},
-                        qualifier: {en: " @ " + describeSurface(attr)}
-                    }),
-                    builder: function(vars) {
-                        let data = vars['data']
-                        let header = vars['header'].header
-                        return {
-                            header: header,
-                            interpolate: bilinearInterpolateScalar,
-                            data: function(i) {
-                                return data[i];
-                            }
-                        }
-                    },
-                    units: [
-                        {label: "Pa",  conversion: function(x) { return x; },                precision: 1}
-                    ],
-                    
-                });
-            }
-        },
-
-        "ZSURF": {
-            matches: _.matches({param: "wind", overlayType: "ZSURF"}),
-            create: function(attr) {
-                return buildProduct({
-                    field: "scalar",
-                    type: "ZSURF",
-                    description: localize({
-                        name: {en: "ZSURF"},
-                        qualifier: {en: " @ " + describeSurface(attr)}
-                    }),
-                    builder: function(vars) {
-                        let data = vars['data']
-                        let header = vars['header'].header
-                        return {
-                            header: header,
-                            interpolate: bilinearInterpolateScalar,
-                            data: function(i) {
-                                return data[i];
-                            }
-                        }
-                    },
-                    units: [
-                        {label: "m",  conversion: function(x) { return x; },                precision: 1}
-                    ],
-                    
-                });
-            }
-        },
-
-        "Z": {
-            matches: _.matches({param: "wind", overlayType: "Z"}),
-            create: function(attr) {
-                return buildProduct({
-                    field: "scalar",
-                    type: "Z",
-                    description: localize({
-                        name: {en: "Z"},
-                        qualifier: {en: " @ " + describeSurface(attr)}
-                    }),
-                    builder: function(vars) {
-                        let data = vars['data']
-                        let header = vars['header'].header
-                        return {
-                            header: header,
-                            interpolate: bilinearInterpolateScalar,
-                            data: function(i) {
-                                return data[i];
-                            }
-                        }
-                    },
-                    units: [
-                        {label: "m",  conversion: function(x) { return x; },                precision: 1}
-                    ],
-                    
+                    particles: {velocityScale: 1/300000, maxIntensity: 10}
                 });
             }
         },
     };
+
+    for(let variable in VARIABLES){
+        let var_name = VARIABLES[variable]
+        FACTORIES[var_name] = {
+            matches: _.matches({param: "wind", overlayType: var_name}),
+            create: function(attr) {
+                return buildProduct({
+                    field: "scalar",
+                    type: var_name,
+                    description: localize({
+                        name: {en: var_name},
+                        qualifier: {en: " @ " + describeSurface(attr)}
+                    }),
+                    builder: function(vars) {
+                        let data = vars['data']
+                        let header = vars['header'].header
+                        return {
+                            header: header,
+                            interpolate: bilinearInterpolateScalar,
+                            data: function(i) {
+                                return data[i];
+                            }
+                        }
+                    },
+                    
+                });
+            }
+        }
+    }
+
+
 
     /**
      * Returns the file name for the most recent OSCAR data layer to the specified date. If offset is non-zero,
@@ -355,19 +243,19 @@ var products = function() {
         if (date === "current") {
             return catalog[catalog.length - 1 + offset];
         }
-        var prefix = µ.ymdRedelimit(date, "/", ""), i = _.sortedIndex(catalog, prefix);
+        let prefix = µ.ymdRedelimit(date, "/", ""), i = _.sortedIndex(catalog, prefix);
         i = (catalog[i] || "").indexOf(prefix) === 0 ? i : i - 1;
         return catalog[i + offset];
     }
 
     function oscar0p33Path(catalog, attr) {
-        var file = lookupOscar(catalog, attr.date);
+        let file = lookupOscar(catalog, attr.date);
         return file ? [OSCAR_PATH, file].join("/") : null;
     }
 
     function oscarDate(catalog, attr) {
-        var file = lookupOscar(catalog, attr.date);
-        var parts = file ? µ.ymdRedelimit(file, "", "/").split("/") : null;
+        let file = lookupOscar(catalog, attr.date);
+        let parts = file ? µ.ymdRedelimit(file, "", "/").split("/") : null;
         return parts ? new Date(Date.UTC(+parts[0], parts[1] - 1, +parts[2], 0)) : null;
     }
 
@@ -378,8 +266,8 @@ var products = function() {
      * (about 30 days).
      */
     function oscarStep(catalog, date, step) {
-        var file = lookupOscar(catalog, µ.dateToUTCymd(date, "/"), step > 1 ? 6 : step < -1 ? -6 : step);
-        var parts = file ? µ.ymdRedelimit(file, "", "/").split("/") : null;
+        let file = lookupOscar(catalog, µ.dateToUTCymd(date, "/"), step > 1 ? 6 : step < -1 ? -6 : step);
+        let parts = file ? µ.ymdRedelimit(file, "", "/").split("/") : null;
         return parts ? new Date(Date.UTC(+parts[0], parts[1] - 1, +parts[2], 0)) : null;
     }
 
@@ -397,17 +285,17 @@ var products = function() {
     }
 
     function bilinearInterpolateScalar(x, y, g00, g10, g01, g11) {
-        var rx = (1 - x);
-        var ry = (1 - y);
+        let rx = (1 - x);
+        let ry = (1 - y);
         return g00 * rx * ry + g10 * x * ry + g01 * rx * y + g11 * x * y;
     }
 
     function bilinearInterpolateVector(x, y, g00, g10, g01, g11) {
-        var rx = (1 - x);
-        var ry = (1 - y);
-        var a = rx * ry,  b = x * ry,  c = rx * y,  d = x * y;
-        var u = g00[0] * a + g10[0] * b + g01[0] * c + g11[0] * d;
-        var v = g00[1] * a + g10[1] * b + g01[1] * c + g11[1] * d;
+        let rx = (1 - x);
+        let ry = (1 - y);
+        let a = rx * ry,  b = x * ry,  c = rx * y,  d = x * y;
+        let u = g00[0] * a + g10[0] * b + g01[0] * c + g11[0] * d;
+        let v = g00[1] * a + g10[1] * b + g01[1] * c + g11[1] * d;
         return [u, v, Math.sqrt(u * u + v * v)];
     }
 
@@ -439,22 +327,22 @@ var products = function() {
      *
      */
     function buildGrid(builder) {
-        // var builder = createBuilder(data);
+        // let builder = createBuilder(data);
 
-        var header = builder.header;
-        var λ0 = header.lo1, φ0 = header.la1;  // the grid's origin (e.g., 0.0E, 90.0N)
-        var Δλ = header.dx, Δφ = header.dy;    // distance between grid points (e.g., 2.5 deg lon, 2.5 deg lat)
-        var ni = header.nx, nj = header.ny;    // number of grid points W-E and N-S (e.g., 144 x 73)
-        var date = new Date(header.refTime);
+        let header = builder.header;
+        let λ0 = header.lo1, φ0 = header.la1;  // the grid's origin (e.g., 0.0E, 90.0N)
+        let Δλ = header.dx, Δφ = header.dy;    // distance between grid points (e.g., 2.5 deg lon, 2.5 deg lat)
+        let ni = header.nx, nj = header.ny;    // number of grid points W-E and N-S (e.g., 144 x 73)
+        let date = new Date(header.refTime);
         date.setHours(date.getHours() + header.forecastTime);
 
         // Scan mode 0 assumed. Longitude increases from λ0, and latitude decreases from φ0.
         // http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table3-4.shtml
-        var grid = [], p = 0;
-        var isContinuous = Math.floor(ni * Δλ) >= 360;
-        for (var j = 0; j < nj; j++) {
-            var row = [];
-            for (var i = 0; i < ni; i++, p++) {
+        let grid = [], p = 0;
+        let isContinuous = Math.floor(ni * Δλ) >= 360;
+        for (let j = 0; j < nj; j++) {
+            let row = [];
+            for (let i = 0; i < ni; i++, p++) {
                 row[i] = builder.data(p);
             }
             if (isContinuous) {
@@ -465,8 +353,8 @@ var products = function() {
         }
 
         function interpolate(λ, φ) {
-            var i = µ.floorMod(λ - λ0, 360) / Δλ;  // calculate longitude index in wrapped range [0, 360)
-            var j = (φ0 - φ) / Δφ;                 // calculate latitude index in direction +90 to -90
+            let i = µ.floorMod(λ - λ0, 360) / Δλ;  // calculate longitude index in wrapped range [0, 360)
+            let j = (φ0 - φ) / Δφ;                 // calculate latitude index in direction +90 to -90
 
             //         1      2           After converting λ and φ to fractional grid indexes i and j, we find the
             //        fi  i   ci          four points "G" that enclose point (i, j). These points are at the four
@@ -477,16 +365,16 @@ var products = function() {
             //      ---G------G--- cj 9   Note that for wrapped grids, the first column is duplicated as the last
             //         |      |           column, so the index ci can be used without taking a modulo.
 
-            var fi = Math.floor(i), ci = fi + 1;
-            var fj = Math.floor(j), cj = fj + 1;
+            let fi = Math.floor(i), ci = fi + 1;
+            let fj = Math.floor(j), cj = fj + 1;
 
-            var row;
+            let row;
             if ((row = grid[fj])) {
-                var g00 = row[fi];
-                var g10 = row[ci];
+                let g00 = row[fi];
+                let g10 = row[ci];
                 if (µ.isValue(g00) && µ.isValue(g10) && (row = grid[cj])) {
-                    var g01 = row[fi];
-                    var g11 = row[ci];
+                    let g01 = row[fi];
+                    let g11 = row[ci];
                     if (µ.isValue(g01) && µ.isValue(g11)) {
                         // All four points found, so interpolate the value.
                         return builder.interpolate(i - fi, j - fj, g00, g10, g01, g11);
@@ -502,33 +390,28 @@ var products = function() {
             date: date,
             interpolate: interpolate,
             forEachPoint: function(cb) {
-                for (var j = 0; j < nj; j++) {
-                    var row = grid[j] || [];
-                    for (var i = 0; i < ni; i++) {
+                for (let j = 0; j < nj; j++) {
+                    let row = grid[j] || [];
+                    for (let i = 0; i < ni; i++) {
                         cb(µ.floorMod(180 + λ0 + i * Δλ, 360) - 180, φ0 - j * Δφ, row[i]);
                     }
                 }
             }
         };
     }
+
     //TODO uogolnic dla wszystkich
-    function productsFor(attributes) {
-        let attr = _.clone(attributes);
-        let results = [];
+    function productsFor(attributes){
+        let attr = _.clone(attributes), results = [];
         _.values(FACTORIES).forEach(function(factory) {
             if (factory.matches(attr)) {
                 results.push(factory.create(attr));
             }
-            else{
-                results.push()
-            }
         });
         return results.filter(µ.isValue);
     }
-
     return {
         overlayTypes: d3.set(_.keys(FACTORIES)),
         productsFor: productsFor
     };
-
 }();

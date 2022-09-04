@@ -204,9 +204,15 @@ body {
  * SVG Element Styling
  **************************************************************************************************/
 
-.coastline, .lakes {
+.coastline{
     stroke: #ffffff;
     stroke-width: 1.25;
+    fill: none;
+}
+
+.lakes {
+    stroke: #4fb5da;
+    stroke-width: 1;
     fill: none;
 }
 

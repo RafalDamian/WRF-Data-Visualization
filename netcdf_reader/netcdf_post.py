@@ -25,6 +25,7 @@ class NetCDFpost:
                 post_data['ntimes'] = times
                 post_data['level'] = level
                 post_data['nlevels'] = levels
+                post_data['units'] = self._read_units()
                 #wind:
                 u = self._read_var_as_array(['U'], time)
                 v = self._read_var_as_array(['V'], time)
@@ -50,7 +51,13 @@ class NetCDFpost:
                     #post_data[var] = []
                     post_data[var]=(self._reshape_data(nx, ny, var_arr, level))
                 self._post_req(url, post_data, time, level)
-
+                
+    def _read_units(self):
+        units = {}
+        units['wind'] = self.input_data['U'].unit
+        for var in self.vars:
+            units[var] = self.input_data[self.vars[var]['vars'][0]].unit
+        return units
     def _read_var_as_array(self, vars, time_index, offset=0):
         data = 0
         if self.input_data[vars[0]].ndim == 3:
@@ -113,9 +120,7 @@ if __name__ == '__main__':
     nc_files_dir = 'nc_files'
     files = [join(nc_files_dir + '\\', f) for f in listdir(nc_files_dir + '\\') 
             if f.endswith(".nc")]
-    
-    for file in files:
-        variables = {
+    variables = {
             'CO2': {
                 'vars': ['CO2_PP_H', 'CO2_PP_M', 'CO2_PP_L', 'CO2_PP_T', 
                         'CO2_BG', 'CO2_ANTH', 'CO2_BIO'],
@@ -127,5 +132,6 @@ if __name__ == '__main__':
             'PS': {'vars': ['PS',], 'offset': 0},
             'Z': {'vars': ['Z',], 'offset': 0},
         }
+    for file in files:
         post_class = NetCDFpost(file, variables)
         post_class.process('http://localhost:2115/upload')

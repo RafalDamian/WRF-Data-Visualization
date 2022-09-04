@@ -76,7 +76,7 @@
                         urlPage = currURL.split('/')[0]
                         urlEnding = '#' + currURL.split('#')[1]
                     }
-                    url = urlPage + '/' + id + urlEnding
+                    url = urlPage + '/plot/' + id + urlEnding
                     window.location.href = url
                 }
             </script>
@@ -134,14 +134,20 @@
     <script src="/libs/d3.geo/0.0.0/d3.geo.polyhedron.v0.min.js" charset="utf-8"></script>
     <script src="/libs/when/2.6.0/when.js" charset="utf-8"></script>
 
-    <div class='wind' value='<%- JSON.stringify(data.data.wind) %>'></div>
+    <div class='wind' 
+        value='<%- JSON.stringify(data.data.wind) %>' 
+        unit='<%- data.units.wind %>'></div>
     <% for (var prop in data.data.vars ) { %>
-        <div class='<%- data.data.vars[prop] %>' value='<%- JSON.stringify(data.data[data.data.vars[prop]]) %>'></div>
+        <div class='<%- data.data.vars[prop] %>' 
+            value='<%- JSON.stringify(data.data[data.data.vars[prop]]) %>' 
+            unit='<%- data.units[data.data.vars[prop]] %>'></div>
     <% } %>
+    <div class='units', value='<%- JSON.stringify(data.units) %>'></div>
     <div class='header' value='<%- JSON.stringify(data.data.header) %>'></div>
     <div class='levels' value='<%- JSON.stringify(data.data.levels) %>'></div>
     <div class='time' value='<%- JSON.stringify(data.data.time) %>'></div>
     <div class='title' value='<%- JSON.stringify(data.data.title) %>'></div>
+    <div class='variables' value='<%- JSON.stringify(data.data.vars) %>'></div>
 
     <script src="/libs/earth/1.0.0/micro.js" charset="utf-8"></script>
     <script src="/libs/earth/1.0.0/globes.js" charset="utf-8"></script>

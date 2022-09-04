@@ -1,42 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html itemscope itemtype="http://schema.org/Map" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
 <head>
     <meta charset="utf-8"/>
-    <title>Data Browser</title>
+    <title>CoCO2 WRF Visualization</title>
     <meta itemprop="name"                                      content="earth"/>
-    <meta itemprop="description"     name="description"        content="WRF Data Visualization"/>
+    <meta itemprop="description"     name="description"        content="an animated map of global wind and weather"/>
     <meta itemprop="author"          name="author"             content="Rafal Damian"/>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:type"        content="website"/>
+    <meta property="og:title"       content="earth"/>
+    <meta property="og:description" content="An animated map of global wind and weather. Visit the community at https://www.facebook.com/EarthWindMap"/>
+    <meta property="og:url"         content="http://earth.nullschool.net"/>
+    <meta property="og:image"       content="http://earth.nullschool.net/preview.jpg"/>
+
+    <link rel="shortcut icon" href="img/favicon.ico"/>
+    <link rel="apple-touch-icon" sizes="120x120" href="img/iphone-icon.png"/>
+    <link rel="apple-touch-icon" sizes="152x152" href="img/ipad-icon.png"/>
     <link rel="stylesheet" type="text/css" href="/styles/styles.css"/>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <link rel="alternate" hreflang="x-default" href="http://earth.nullschool.net/"/>
+    <link rel="alternate" hreflang="ja" href="http://earth.nullschool.net/jp/"/>
+
+    
 </head>
 <body data-lang="en">
+    <style>
+        .container {
+          height: 80vh;
+          position: relative;
+        }
+        
+        .center {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -ms-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+    </style>
 
-    <a href="/upload" class="btn btn-primary">Add file</a><br />
-    <table class="table">
-        <thead>
-            <tr>
-                <th scope="col">title</th>
-                <th scope="col">actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% for(var i=0; i < data.length; i++) { %>
-                <tr>
-                    <td><%=data[i].title%></td>
-                    <td>
-                        <a href="/<%= data[i].id %>" class="btn btn-primary">Plot</a>
-                        <a href="/delete/<%= data[i].id %>" class="btn btn-danger">Delete</a>
-                    </td>
-                </tr>
-            <% } %>
-        </tbody>
-    </table>
+    
+    <%- include('navbar') -%>
+    <div class="container">
+        <div class="center">
+            File <%= title.title %> has been deleted from the database
+        </div>
+    </div>
 
-    <!-- Bootstrap script -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" type="text/css" href="/styles/styles.css"/>
 </body>
 </html>
