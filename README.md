@@ -37,6 +37,7 @@ Web app for rapid WRF Data Visualization. Created by Rafał Damian for [CoCO2 pr
 3. create and activate environment:
 
     python -m venv env
+    
     env\Scripts\activate
 
 3. install requirements:
