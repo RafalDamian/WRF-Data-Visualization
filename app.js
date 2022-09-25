@@ -54,7 +54,8 @@ mongoose.connect(url, {
     console.log("============================================================");
     if (error)
         console.log('Can not connect to DB!', error)
-    console.log('Connected to DB')
+    else
+        console.log('Connected to DB')
 })
 //---------------------------------------------
 
