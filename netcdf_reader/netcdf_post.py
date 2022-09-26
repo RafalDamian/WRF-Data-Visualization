@@ -11,7 +11,6 @@ class NetCDFpost:
     def __init__(self, netcdf_file_path, variables):
         self.file = netcdf_file_path
         self.input_data = nc.Dataset(netcdf_file_path)
-        print(self.input_data['CO2_PP_H'])
         self.vars = variables #dict: {var_name: {'vars':[vars], 'offset':n},...}
         #does not include: lon, lat, time, u, v - these are obligatory
 
@@ -134,4 +133,4 @@ if __name__ == '__main__':
         }
     for file in files:
         post_class = NetCDFpost(file, variables)
-        #post_class.process('http://localhost:2115/upload')
+        post_class.process('http://localhost:2115/upload')
